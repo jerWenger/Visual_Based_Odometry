@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'visualize_tags = visual_odometry.visualize_tags:main'
+            'apriltag_visualization = visual_odometry.apriltag_visualization:main'
         ],
     },
 )
