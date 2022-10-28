@@ -39,11 +39,7 @@ class apriltag_visualization(Node):
     def new_pose_data(self, msg):
         """ Process Apriltage detection message"""
         self.detection_array = msg
-        for detection in self.detection_array.detections:
-            self.corner1 = detection.corners[0]
-            self.corner2 = detection.corners[1]
-            self.corner3 = detection.corners[2]
-            self.corner4 = detection.corners[3]
+
         
 
     def tf_attribute(self, msg):
@@ -54,10 +50,15 @@ class apriltag_visualization(Node):
         """This function adds the apriltag data to the cv_image"""
         self.annotated_image = self.cv_image
 
-        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner1.x),int(self.corner1.y)),(int(self.corner2.x),int(self.corner2.y)),(0,0,255),5)
-        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner2.x),int(self.corner2.y)),(int(self.corner3.x),int(self.corner3.y)),(0,255,0),5)
-        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner3.x),int(self.corner3.y)),(int(self.corner4.x),int(self.corner4.y)),(255,0,0),5)
-        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner4.x),int(self.corner4.y)),(int(self.corner1.x),int(self.corner1.y)),(0,255,255),5)
+        for detection in self.detection_array.detections:
+            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[0].x),int(detection.corners[0].y)),(int(detection.corners[1].x),int(detection.corners[1].y)),(0,0,255),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[1].x),int(detection.corners[1].y)),(int(detection.corners[2].x),int(detection.corners[2].y)),(0,255,0),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[2].x),int(detection.corners[2].y)),(int(detection.corners[3].x),int(detection.corners[3].y)),(255,0,0),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[3].x),int(detection.corners[3].y)),(int(detection.corners[0].x),int(detection.corners[0].y)),(0,255,255),5)
+            
+            #Get the size of the number so it can be centered
+            size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
+            self.annotated_image = cv2.putText(self.annotated_image,str(detection.id),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)
 
         
 
