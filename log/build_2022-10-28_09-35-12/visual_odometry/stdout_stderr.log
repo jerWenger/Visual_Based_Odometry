@@ -1,0 +1,25 @@
+running develop
+running egg_info
+creating visual_odometry.egg-info
+writing visual_odometry.egg-info/PKG-INFO
+writing dependency_links to visual_odometry.egg-info/dependency_links.txt
+writing entry points to visual_odometry.egg-info/entry_points.txt
+writing requirements to visual_odometry.egg-info/requires.txt
+writing top-level names to visual_odometry.egg-info/top_level.txt
+writing manifest file 'visual_odometry.egg-info/SOURCES.txt'
+reading manifest file 'visual_odometry.egg-info/SOURCES.txt'
+writing manifest file 'visual_odometry.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/lib/python3.8/site-packages/site.py
+Creating /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/lib/python3.8/site-packages/visual-odometry.egg-link (link to .)
+Installing apriltag_visualization script to /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/lib/visual_odometry
+
+Installed /home/webmeister/ros2_ws/src/Visual_Based_Odometry/build/visual_odometry
+running install_data
+creating /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/ament_index
+creating /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/ament_index/resource_index
+creating /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/ament_index/resource_index/packages
+copying resource/visual_odometry -> /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/ament_index/resource_index/packages
+copying package.xml -> /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/visual_odometry
+copying launch/bringup.py -> /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/visual_odometry
+copying Calibration Data/ost.yaml -> /home/webmeister/ros2_ws/src/Visual_Based_Odometry/install/visual_odometry/share/visual_odometry

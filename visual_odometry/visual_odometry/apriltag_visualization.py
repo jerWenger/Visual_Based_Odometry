@@ -8,15 +8,15 @@ from cv_bridge import CvBridge
 import cv2
 import numpy as np
 from geometry_msgs.msg import Twist, Vector3
-from apriltag_msgs.msg import AprilTagDetection
+from apriltag_msgs.msg import AprilTagDetectionArray
 from tf2_msgs.msg import TFMessage
 
-class AprilTagVis(Node):
+class apriltag_visualization(Node):
     """  """
 
     def __init__(self, image_topic, apriltag_topic, tf_topic):
         """ Initialize the visualizer """
-        super().__init__('AprilTagVis')
+        super().__init__('apriltag_visualization')
         self.cv_image = None                        # the latest image from the camera
         self.annotated_image = None
         self.detection_array = None
@@ -24,7 +24,7 @@ class AprilTagVis(Node):
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
 
         self.create_subscription(Image, image_topic, self.process_image, 10)
-        self.create_subscription(AprilTagDetection, apriltag_topic, self.new_pose_data, 10)
+        self.create_subscription(AprilTagDetectionArray, apriltag_topic, self.new_pose_data, 10)
         self.create_subscription(TFMessage, tf_topic, self.tf_attribute, 10)
 
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
@@ -39,10 +39,11 @@ class AprilTagVis(Node):
     def new_pose_data(self, msg):
         """ Process Apriltage detection message"""
         self.detection_array = msg
-        self.corner1 = self.detection_array.corners[0]
-        self.corner2 = self.detection_array.corners[1]
-        self.corner3 = self.detection_array.corners[2]
-        self.corner4 = self.detection_array.corners[3]
+        for detection in self.detection_array.detections:
+            self.corner1 = detection.corners[0]
+            self.corner2 = detection.corners[1]
+            self.corner3 = detection.corners[2]
+            self.corner4 = detection.corners[3]
         
 
     def tf_attribute(self, msg):
@@ -53,10 +54,10 @@ class AprilTagVis(Node):
         """This function adds the apriltag data to the cv_image"""
         self.annotated_image = self.cv_image
 
-        cv2.line(self.annotated_image,self.corner1,self.corner2,(0,0,255),5)
-        cv2.line(self.annotated_image,self.corner2,self.corner3,(0,255,0),5)
-        cv2.line(self.annotated_image,self.corner3,self.corner4,(255,0,0),5)
-        cv2.line(self.annotated_image,self.corner4,self.corner1,(125,125,125),5)
+        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner1.x),int(self.corner1.y)),(int(self.corner2.x),int(self.corner2.y)),(0,0,255),5)
+        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner2.x),int(self.corner2.y)),(int(self.corner3.x),int(self.corner3.y)),(0,255,0),5)
+        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner3.x),int(self.corner3.y)),(int(self.corner4.x),int(self.corner4.y)),(255,0,0),5)
+        self.annotated_image = cv2.line(self.annotated_image,(int(self.corner4.x),int(self.corner4.y)),(int(self.corner1.x),int(self.corner1.y)),(0,255,255),5)
 
         
 
@@ -65,8 +66,6 @@ class AprilTagVis(Node):
             We are using a separate thread to run the loop_wrapper to work around
             issues with single threaded executors in ROS2 """
         cv2.namedWindow('video_window')
-        self.red_lower_bound = 0
-        cv2.setMouseCallback('video_window', self.process_mouse_event)
         while True:
             self.run_loop()
             time.sleep(0.1)
@@ -78,21 +77,16 @@ class AprilTagVis(Node):
         if not self.cv_image is None:
             # ADD a function here
 
-            if not self.detection_array.id:
+            if not self.detection_array.detections:
                 cv2.imshow('video_window', self.cv_image)
             else:
-                self.annotated_image = self.overlay_data()
+                self.overlay_data()
                 cv2.imshow('video_window', self.annotated_image)
             cv2.waitKey(5)
 
-if __name__ == '__main__':
-    node = AprilTagVis("/camera/image_raw")
-    node.run()
-
-
 def main(args=None):
     rclpy.init()
-    n = AprilTagVis("camera/image_raw", "/apriltag/detections", "/tf")
+    n = apriltag_visualization("camera/image_raw", "/apriltag/detections", "/tf")
     rclpy.spin(n)
     rclpy.shutdown()
 
