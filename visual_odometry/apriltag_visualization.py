@@ -77,8 +77,12 @@ class AprilTagVis(Node):
         # NOTE: only do cv2.imshow and cv2.waitKey in this function 
         if not self.cv_image is None:
             # ADD a function here
-            self.annotated_image = self.overlay_data()
-            cv2.imshow('video_window', self.annotated_image)
+
+            if not self.detection_array.id:
+                cv2.imshow('video_window', self.cv_image)
+            else:
+                self.annotated_image = self.overlay_data()
+                cv2.imshow('video_window', self.annotated_image)
             cv2.waitKey(5)
 
 if __name__ == '__main__':
