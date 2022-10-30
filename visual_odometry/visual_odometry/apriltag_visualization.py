@@ -10,6 +10,8 @@ import numpy as np
 from geometry_msgs.msg import Twist, Vector3
 from apriltag_msgs.msg import AprilTagDetectionArray
 from tf2_msgs.msg import TFMessage
+import tf2_ros as tf
+from .helper_functions import TFHelper
 
 class apriltag_visualization(Node):
     """  """
@@ -20,12 +22,12 @@ class apriltag_visualization(Node):
         self.cv_image = None                        # the latest image from the camera
         self.annotated_image = None
         self.detection_array = None
-        self.tf_array = None
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
+        self.camera_frame = "camera"
 
         self.create_subscription(Image, image_topic, self.process_image, 10)
         self.create_subscription(AprilTagDetectionArray, apriltag_topic, self.new_pose_data, 10)
-        self.create_subscription(TFMessage, tf_topic, self.tf_attribute, 10)
+        self.transform_helper = TFHelper(self)
 
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
         thread = Thread(target=self.loop_wrapper)
@@ -40,41 +42,46 @@ class apriltag_visualization(Node):
         """ Process Apriltage detection message"""
         self.detection_array = msg
 
-        
+    def get_scan_info(self):
+        self.tag_array = []
 
-    def tf_attribute(self, msg):
-        """Process TF message"""
-        self.tf_array = msg
+        for i in range(len(self.detection_array.detections)):
+            detection = self.detection_array.detections[i]
+            tag_frame = "tag36h11:" + str(detection.id)
+            tag_data = self.transform_helper.get_matching_odom_pose(tag_frame,self.camera_frame,self.detection_array.header.stamp)
+
+            if not tag_data:
+                distance = "Error"
+            else:
+                raw_distance = np.sqrt((tag_data[0].position.x ** 2) + (tag_data[0].position.y ** 2) + (tag_data[0].position.z ** 2))
+                distance = str(raw_distance)[0:4]
+            this_tag = [detection.id, detection.corners, distance, detection.centre]
+
+            self.tag_array.append(this_tag)
+
+
+
+
 
     def overlay_data(self):
         """This function adds the apriltag data to the cv_image"""
         self.annotated_image = self.cv_image
 
-        # for detection in self.detection_array.detections:
+        for tag in self.tag_array:
             
-        #     #Map Corner Values
-        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[0].x),int(detection.corners[0].y)),(int(detection.corners[1].x),int(detection.corners[1].y)),(0,0,255),5)
-        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[1].x),int(detection.corners[1].y)),(int(detection.corners[2].x),int(detection.corners[2].y)),(0,255,0),5)
-        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[2].x),int(detection.corners[2].y)),(int(detection.corners[3].x),int(detection.corners[3].y)),(255,0,0),5)
-        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[3].x),int(detection.corners[3].y)),(int(detection.corners[0].x),int(detection.corners[0].y)),(0,255,255),5)
-            
-        #     #Get the size of the number so it can be centered
-        #     size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
-        #     self.annotated_image = cv2.putText(self.annotated_image,(str(detection.id)),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)            
-
-        for i in range(len(self.detection_array.detections)):
-            detection = self.detection_array.detections[i]
+            text = str(tag[0]) + ":" + (tag[2])
+            corners = tag[1]
             #transform = self.tf_array.transforms[i]
             
             #Map Corner Values
-            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[0].x),int(detection.corners[0].y)),(int(detection.corners[1].x),int(detection.corners[1].y)),(0,0,255),5)
-            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[1].x),int(detection.corners[1].y)),(int(detection.corners[2].x),int(detection.corners[2].y)),(0,255,0),5)
-            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[2].x),int(detection.corners[2].y)),(int(detection.corners[3].x),int(detection.corners[3].y)),(255,0,0),5)
-            self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[3].x),int(detection.corners[3].y)),(int(detection.corners[0].x),int(detection.corners[0].y)),(0,255,255),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(corners[0].x),int(corners[0].y)),(int(corners[1].x),int(corners[1].y)),(0,0,255),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(corners[1].x),int(corners[1].y)),(int(corners[2].x),int(corners[2].y)),(0,255,0),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(corners[2].x),int(corners[2].y)),(int(corners[3].x),int(corners[3].y)),(255,0,0),5)
+            self.annotated_image = cv2.line(self.annotated_image,(int(corners[3].x),int(corners[3].y)),(int(corners[0].x),int(corners[0].y)),(0,255,255),5)
 
             #Get the size of the id (and soon to be distance) so it can be centered
-            size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
-            self.annotated_image = cv2.putText(self.annotated_image,(str(detection.id)),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)
+            size = cv2.getTextSize(str(text),cv2.FONT_HERSHEY_PLAIN,5,3)
+            self.annotated_image = cv2.putText(self.annotated_image,text,(int(tag[3].x - (size[0][0] / 2)),int(tag[3].y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,5,(255,0,255),3)
 
 
 
@@ -98,6 +105,7 @@ class apriltag_visualization(Node):
             if not self.detection_array.detections:
                 cv2.imshow('video_window', self.cv_image)
             else:
+                self.get_scan_info()
                 self.overlay_data()
                 cv2.imshow('video_window', self.annotated_image)
             cv2.waitKey(5)
@@ -111,3 +119,4 @@ def main(args=None):
 
 if __name__ == '__main__':
     main()
+
