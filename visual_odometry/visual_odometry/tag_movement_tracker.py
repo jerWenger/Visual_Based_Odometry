@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rclpy
 from threading import Thread
 from rclpy.node import Node
@@ -9,62 +11,75 @@ import cv2
 import numpy as np
 from geometry_msgs.msg import Twist, Vector3
 from apriltag_msgs.msg import AprilTagDetectionArray
-from tf2_msgs.msg import TFMessage
 import PyKDL
+from .helper_functions import TFHelper
+import matplotlib.pyplot as plt
 
 class TrackMovement(Node):
     def __init__(self, image_topic, apriltag_topic, tf_topic):
         """ Initialize the movement tracker"""
         super().__init__('tag_movement_tracker')
-        self.cv_image = None                        # the latest image from the camera
-        self.annotated_image = None
+
+        self.camera_frame = 'camera'
+        self.tag_frame = 'tag36h11:1'
+
         self.detection_array = None
-        self.tf_array = None
+        self.last_detection_timestamp = None
+        self.first_tag_transform = None
+        self.current_tag_transform = None
         self.robot_pos_array = [(0,0)]
-        self.first_tag_detection = None
-        self.first_tag_tf = None
+        self.robot_x = [0]
+        self.robot_y = [0]
+        self.transform_helper = TFHelper(self)
         self.bridge = CvBridge()                    # used to convert ROS messages to OpenCV
 
-        self.create_subscription(Image, image_topic, self.process_image, 10)
         self.create_subscription(AprilTagDetectionArray, apriltag_topic, self.new_pose_data, 10)
-        self.create_subscription(TFMessage, tf_topic, self.tf_attribute, 10)
 
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
         thread = Thread(target=self.loop_wrapper)
         thread.start()
 
-    def process_image(self, msg):
-        """ Process image messages from ROS and stash them in an attribute
-            called cv_image for subsequent processing """
-        self.cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-
     def new_pose_data(self, msg):
         """ Process Apriltage detection message"""
-        self.detection_array = msg
-
-    def tf_attribute(self, msg):
-        """Process TF message"""
-        self.tf_array = msg
+        self.last_detection_timestamp = msg.header.stamp
+        if self.detection_array == None:
+            self.detection_array = msg
 
     def loop_wrapper(self):
         """ This function takes care of calling the run_loop function repeatedly.
             We are using a separate thread to run the loop_wrapper to work around
             issues with single threaded executors in ROS2 """
+
+        plt.ion()
+        fig, ax = plt.subplots()
+        sc = ax.scatter(self.robot_x, self.robot_y)
+        plt.xlim([-0.5,0.5])
+        plt.ylim([-0.5,0.5])
+        plt.draw()
+        
         while True:
             self.run_loop()
+            self.robot_x.append(self.robot_pos_array[-1][0])
+            self.robot_y.append(self.robot_pos_array[-1][1])
+            sc.set_offsets(np.c_[self.robot_x, self.robot_y])
+            fig.canvas.draw_idle()
+            plt.pause(0.1)
             time.sleep(0.1)
 
     def run_loop(self):
-        if self.detection_array.detections:
-            if not self.first_tag_detection:
-                self.first_tag_detection = self.detection_array
-                self.first_tag_tf = self.tf_array
+        if self.detection_array is not None:
+            if self.first_tag_transform is None:
+                self.first_tag_transform = self.transform_helper.get_tag_transform(self.camera_frame, self.tag_frame, self.last_detection_timestamp)
+                return
             else:
-                for transform in self.tf_array:
-                    translation = transform.translation
-                    rotation = transform.rotation
+                self.current_tag_transform = self.transform_helper.get_tag_transform(self.camera_frame, self.tag_frame, self.last_detection_timestamp)
 
-
+            if self.current_tag_transform is not None:
+                relative_movement = np.matmul(self.first_tag_transform, np.linalg.inv(self.current_tag_transform))
+                print(f"{relative_movement=}")
+                self.robot_pos_array.append((relative_movement[0, 2], relative_movement[1, 2]))
+                plt.scatter([pose[0] for pose in self.robot_pos_array], [pose[1] for pose in self.robot_pos_array])
+            
 
 def main(args=None):
     rclpy.init()
