@@ -9,9 +9,7 @@ import os
 
 # detect all 36h11 tags
 cfg_36h11 = {
-    "image_transport"if not self.detection_array:
-            #     cv2.imshow('video_window', self.cv_image)
-            # else:: "raw",
+    "image_transport": "raw",
     "family": "36h11",
     "size": 0.173,
     "max_hamming": 0,
