@@ -65,6 +65,25 @@ class TFHelper(object):
             return tag_2d_transform
         return None
 
+    def get_odom_transform(self, odom_frame, base_frame, timestamp):
+        if self.tf_buffer.can_transform(odom_frame, base_frame, timestamp):
+            transform = self.tf_buffer.lookup_transform(odom_frame, base_frame, timestamp)
+            robot_pose_frame = PyKDL.Frame(V=PyKDL.Vector(x=transform.transform.translation.x,
+                                                y=transform.transform.translation.y,
+                                                z=transform.transform.translation.z),
+                                R=PyKDL.Rotation.Quaternion(x=transform.transform.rotation.x,
+                                                            y=transform.transform.rotation.y,
+                                                            z=transform.transform.rotation.z,
+                                                            w=transform.transform.rotation.w))
+            robot_rotation_vector = (robot_pose_frame.M[0,0], robot_pose_frame.M[1,0])
+            robot_rotation_angle = np.arctan2(robot_rotation_vector[1], robot_rotation_vector[0])
+            robot_position = (transform.transform.translation.x, transform.transform.translation.y)
+            robot_2d_transform = np.matrix([[np.cos(robot_rotation_angle), -np.sin(robot_rotation_angle), robot_position[0]],
+                                [np.sin(robot_rotation_angle), np.cos(robot_rotation_angle), robot_position[1]],
+                                [0, 0, 1]])
+            return robot_2d_transform
+        return None
+
     def get_matching_odom_pose(self, odom_frame, base_frame, timestamp):
         """ Find the odometry position for a given timestamp.  We want to avoid blocking, so if the transform is
             not ready, we return None.
