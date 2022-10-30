@@ -50,17 +50,33 @@ class apriltag_visualization(Node):
         """This function adds the apriltag data to the cv_image"""
         self.annotated_image = self.cv_image
 
-        for detection in self.detection_array.detections:
+        # for detection in self.detection_array.detections:
+            
+        #     #Map Corner Values
+        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[0].x),int(detection.corners[0].y)),(int(detection.corners[1].x),int(detection.corners[1].y)),(0,0,255),5)
+        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[1].x),int(detection.corners[1].y)),(int(detection.corners[2].x),int(detection.corners[2].y)),(0,255,0),5)
+        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[2].x),int(detection.corners[2].y)),(int(detection.corners[3].x),int(detection.corners[3].y)),(255,0,0),5)
+        #     self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[3].x),int(detection.corners[3].y)),(int(detection.corners[0].x),int(detection.corners[0].y)),(0,255,255),5)
+            
+        #     #Get the size of the number so it can be centered
+        #     size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
+        #     self.annotated_image = cv2.putText(self.annotated_image,(str(detection.id)),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)            
+
+        for i in range(len(self.detection_array.detections)):
+            detection = self.detection_array.detections[i]
+            #transform = self.tf_array.transforms[i]
+            
+            #Map Corner Values
             self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[0].x),int(detection.corners[0].y)),(int(detection.corners[1].x),int(detection.corners[1].y)),(0,0,255),5)
             self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[1].x),int(detection.corners[1].y)),(int(detection.corners[2].x),int(detection.corners[2].y)),(0,255,0),5)
             self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[2].x),int(detection.corners[2].y)),(int(detection.corners[3].x),int(detection.corners[3].y)),(255,0,0),5)
             self.annotated_image = cv2.line(self.annotated_image,(int(detection.corners[3].x),int(detection.corners[3].y)),(int(detection.corners[0].x),int(detection.corners[0].y)),(0,255,255),5)
-            
-            #Get the size of the number so it can be centered
-            size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
-            self.annotated_image = cv2.putText(self.annotated_image,str(detection.id),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)
 
-        
+            #Get the size of the id (and soon to be distance) so it can be centered
+            size = cv2.getTextSize(str(detection.id),cv2.FONT_HERSHEY_PLAIN,8,3)
+            self.annotated_image = cv2.putText(self.annotated_image,(str(detection.id)),(int(detection.centre.x - (size[0][0] / 2)),int(detection.centre.y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,8,(255,0,255),3)
+
+
 
     def loop_wrapper(self):
         """ This function takes care of calling the run_loop function repeatedly.
@@ -70,6 +86,7 @@ class apriltag_visualization(Node):
         while True:
             self.run_loop()
             time.sleep(0.1)
+
 
 
 
