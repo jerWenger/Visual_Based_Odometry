@@ -62,8 +62,8 @@ class TFHelper(object):
                                                           base_frame,
                                                           Time())
             delta_t = Time.from_msg(timestamp) - Time.from_msg(most_recent.header.stamp)
-            return (None, delta_t)
+            return None
         else:
-            return (None, None)
+            return None
 
     

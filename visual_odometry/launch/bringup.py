@@ -88,5 +88,11 @@ def generate_launch_description():
                 ("/apriltag/camera_info", "/camera/camera_info"),
             ],
             parameters=[cfg_36h11],
+        ),
+
+        Node(
+            package='visual_odometry',
+            executable='apriltag_visualization',
+            name='apriltag_visualization'
         )
     ])
