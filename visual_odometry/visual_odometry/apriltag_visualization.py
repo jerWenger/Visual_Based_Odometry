@@ -28,6 +28,7 @@ class apriltag_visualization(Node):
         self.create_subscription(Image, image_topic, self.process_image, 10)
         self.create_subscription(AprilTagDetectionArray, apriltag_topic, self.new_pose_data, 10)
         self.transform_helper = TFHelper(self)
+        self.id_color= [(255,0,255), (0,255,255), (255,255,0), (0,0,255), (0,255,0), (255,0,0), (125,0,125), (0,125,125), (125,125,0), (0,0,125), (125,0,0), (0,125,0)]
 
         self.pub = self.create_publisher(Twist, 'cmd_vel', 10)
         thread = Thread(target=self.loop_wrapper)
@@ -42,6 +43,8 @@ class apriltag_visualization(Node):
         """ Process Apriltage detection message"""
         self.detection_array = msg
 
+    
+
     def get_scan_info(self):
         self.tag_array = []
 
@@ -49,13 +52,14 @@ class apriltag_visualization(Node):
             detection = self.detection_array.detections[i]
             tag_frame = "tag36h11:" + str(detection.id)
             tag_data = self.transform_helper.get_matching_odom_pose(tag_frame,self.camera_frame,self.detection_array.header.stamp)
+        
 
             if not tag_data:
                 distance = "Error"
             else:
                 raw_distance = np.sqrt((tag_data[0].position.x ** 2) + (tag_data[0].position.y ** 2) + (tag_data[0].position.z ** 2))
                 distance = str(raw_distance)[0:4]
-            this_tag = [detection.id, detection.corners, distance, detection.centre]
+            this_tag = [detection.id, detection.corners, distance, detection.centre,self.id_color[detection.id]]
 
             self.tag_array.append(this_tag)
 
@@ -81,7 +85,7 @@ class apriltag_visualization(Node):
 
             #Get the size of the id (and soon to be distance) so it can be centered
             size = cv2.getTextSize(str(text),cv2.FONT_HERSHEY_PLAIN,5,3)
-            self.annotated_image = cv2.putText(self.annotated_image,text,(int(tag[3].x - (size[0][0] / 2)),int(tag[3].y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,5,(255,0,255),3)
+            self.annotated_image = cv2.putText(self.annotated_image,text,(int(tag[3].x - (size[0][0] / 2)),int(tag[3].y + (size[0][1] / 2))),cv2.FONT_HERSHEY_PLAIN,5,tag[4],3)
 
 
 
