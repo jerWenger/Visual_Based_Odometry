@@ -1,3 +1,0 @@
-[console_scripts]
-apriltag_visualization = visual_odometry.apriltag_visualization:main
-
