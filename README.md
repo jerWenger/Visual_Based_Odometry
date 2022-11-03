@@ -1,5 +1,5 @@
 # Visual Odometry
-**Charlie Babe,, Allison Li and Jeremy Wenger**
+**Charlie Babe, Allison Li, and Jeremy Wenger**
 
 **CompRobo 2022**
 
@@ -19,6 +19,8 @@ We calibrated our camera using the Nav2 library for ROS2. We used a standard siz
 
 ### AprilTag Visualizer
 ![AprilTag visualizer demo](media/visualization_demo.gif)
+
+The AprilTag Visualizer was one of our primary system for troubleshooting our detection system. It allowed for us to recognize how the camera system was behaving and if it were having any issues such as a lack of connection or a decrease in bit rate. The Visualizer recognizes apriltags in the 36h11 family of tags and displays their ID number as well as the distance the tag is away from the camera. It also displays a bounding box around the tag to show that we are able to recognize the corners of each tag and track their movements.
 
 ### Relative Movement Tracking
 ![Relative movement tracking demo](media/tag_movement_tracking_demo_4.gif)
